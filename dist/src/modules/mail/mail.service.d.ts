@@ -1,0 +1,75 @@
+import { ConfigService } from '@nestjs/config';
+export declare class MailService {
+    private readonly config;
+    private readonly logger;
+    private readonly transporter;
+    private readonly fromAddress;
+    constructor(config: ConfigService);
+    private send;
+    sendTenantInvite(opts: {
+        to: string;
+        name: string;
+        orgName: string;
+        inviteLink: string;
+        expiresAt: Date;
+        language?: string;
+    }): Promise<void>;
+    sendTicketCreated(opts: {
+        to: string;
+        language: string;
+        tenantName: string;
+        unitNumber: string;
+        propertyName: string;
+        ticketTitle: string;
+        ticketCategory: string;
+        ticketPriority: string;
+        description: string;
+        ticketLink: string;
+    }): Promise<void>;
+    sendMessageReceived(opts: {
+        to: string;
+        language: string;
+        senderName: string;
+        messagePreview: string;
+        ticketTitle: string;
+        ticketLink: string;
+    }): Promise<void>;
+    sendAppointmentScheduled(opts: {
+        to: string;
+        language: string;
+        ticketTitle: string;
+        scheduledAt: Date;
+        durationMin: number;
+        address: string;
+        note?: string;
+        ticketLink: string;
+    }): Promise<void>;
+    sendAppointmentReminder(opts: {
+        to: string;
+        language: string;
+        ticketTitle: string;
+        scheduledAt: Date;
+        address: string;
+        hoursUntil: number;
+        ticketLink: string;
+    }): Promise<void>;
+    sendAppointmentCancelled(opts: {
+        to: string;
+        language: string;
+        ticketTitle: string;
+        scheduledAt: Date;
+        cancelledBy: string;
+        reason?: string;
+        ticketLink: string;
+    }): Promise<void>;
+    sendTicketPendingReminder(opts: {
+        to: string;
+        language: string;
+        ticketTitle: string;
+        ticketNumber: string;
+        daysOpen: number;
+        tenantName: string;
+        unitNumber: string;
+        ticketLink: string;
+    }): Promise<void>;
+}

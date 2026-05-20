@@ -1,0 +1,314 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  LANDLORD
+  TENANT
+}
+
+enum TicketCategory {
+  PLUMBING
+  HEATING
+  INTERNET
+  CLEANING
+  NOISE
+  ELECTRICITY
+  OTHER
+}
+
+enum TicketPriority {
+  URGENT
+  NORMAL
+  LOW
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  FIXED
+  CLOSED
+}
+
+enum EmergencyType {
+  WATER_LEAKAGE
+  HEATING_FAILURE
+  ELECTRICAL_HAZARD
+  SECURITY_ISSUE
+  OTHER
+}
+
+enum MessageType {
+  USER_MESSAGE
+  SYSTEM_MESSAGE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+model Organisation {
+  id         String     @id @default(uuid())
+  name       String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  users      User[]
+  properties Property[]
+  tickets    Ticket[]
+
+  @@map("organisations")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  orgId         String       @map("org_id")
+  org           Organisation @relation(fields: [orgId], references: [id])
+  role          Role         @default(TENANT)
+  name          String
+  email         String       @unique
+  password      String
+  phone         String?
+  language      String       @default("de")
+  isActive      Boolean      @default(true) @map("is_active")
+  emailVerified Boolean      @default(false) @map("email_verified")
+  refreshToken      String?      @map("refresh_token")
+  pushSubscription  String?      @map("push_subscription")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  unit                  Unit?                  @relation("UnitTenant")
+  tickets               Ticket[]               @relation("TicketTenant")
+  ticketNotes           TicketNote[]           @relation("TicketNoteAuthor")
+  sentMessages          Message[]              @relation("MessageSender")
+  messageReads          MessageRead[]          @relation("MessageReader")
+  createdAppointments   Appointment[]          @relation("AppointmentCreator")
+  inAppNotifications    InAppNotification[]
+
+  @@index([orgId])
+  @@index([email])
+  @@map("users")
+}
+
+model Property {
+  id          String    @id @default(uuid())
+  orgId       String    @map("org_id")
+  org         Organisation @relation(fields: [orgId], references: [id])
+  name        String
+  street      String
+  city        String
+  postalCode  String    @map("postal_code")
+  country     String    @default("Germany")
+  notes       String?
+  latitude    Float?
+  longitude   Float?
+  geocodedAt  DateTime? @map("geocoded_at")
+  units       Unit[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@map("properties")
+}
+
+model Unit {
+  id           String    @id @default(uuid())
+  orgId        String    @map("org_id")
+  propertyId   String    @map("property_id")
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unitNumber   String    @map("unit_number")
+  floor        Int?
+  bedrooms     Int?
+  sizeM2       Float?    @map("size_m2")
+  tenantId     String?   @unique @map("tenant_id")
+  tenant       User?     @relation("UnitTenant", fields: [tenantId], references: [id])
+  notes        String?
+  tickets      Ticket[]
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([propertyId])
+  @@map("units")
+}
+
+model TenantInvite {
+  id         String    @id @default(uuid())
+  orgId      String    @map("org_id")
+  unitId     String    @map("unit_id")
+  email      String
+  name       String
+  token      String    @unique
+  expiresAt  DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([token])
+  @@index([orgId])
+  @@map("tenant_invites")
+}
+
+model Ticket {
+  id            String         @id @default(uuid())
+  ticketNumber  String         @unique @map("ticket_number")
+  orgId         String         @map("org_id")
+  org           Organisation   @relation(fields: [orgId], references: [id])
+  unitId        String         @map("unit_id")
+  unit          Unit           @relation(fields: [unitId], references: [id])
+  tenantId      String         @map("tenant_id")
+  tenant        User           @relation("TicketTenant", fields: [tenantId], references: [id])
+  category      TicketCategory
+  priority      TicketPriority
+  status        TicketStatus   @default(OPEN)
+  title         String
+  description   String
+  photos        String[]
+  isEmergency   Boolean        @default(false) @map("is_emergency")
+  emergencyType EmergencyType? @map("emergency_type")
+  closedAt      DateTime?      @map("closed_at")
+  lastActivity  DateTime       @default(now()) @map("last_activity")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  statusHistory TicketStatusLog[]
+  notes         TicketNote[]
+  messages      Message[]
+  appointments  Appointment[]
+
+  @@index([orgId])
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([priority])
+  @@map("tickets")
+}
+
+model TicketStatusLog {
+  id         String        @id @default(uuid())
+  ticketId   String        @map("ticket_id")
+  ticket     Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fromStatus TicketStatus? @map("from_status")
+  toStatus   TicketStatus  @map("to_status")
+  changedBy  String        @map("changed_by")
+  changedAt  DateTime      @default(now()) @map("changed_at")
+
+  @@index([ticketId])
+  @@map("ticket_status_logs")
+}
+
+model TicketNote {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String   @map("author_id")
+  author    User     @relation("TicketNoteAuthor", fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ticketId])
+  @@map("ticket_notes")
+}
+
+model TicketCounter {
+  year  Int @id
+  count Int @default(0)
+
+  @@map("ticket_counters")
+}
+
+model NotificationQueue {
+  id           String   @id @default(uuid())
+  orgId        String   @map("org_id")
+  targetUserId String   @map("target_user_id")
+  type         String
+  channels     String[]
+  payload      Json
+  status       String   @default("PENDING")
+  attempts     Int      @default(0)
+  scheduledAt  DateTime @default(now()) @map("scheduled_at")
+  sentAt       DateTime? @map("sent_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([status, scheduledAt])
+  @@index([orgId])
+  @@map("notification_queue")
+}
+
+model Message {
+  id         String      @id @default(uuid())
+  orgId      String      @map("org_id")
+  ticketId   String      @map("ticket_id")
+  ticket     Ticket      @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId   String?     @map("sender_id")
+  sender     User?       @relation("MessageSender", fields: [senderId], references: [id])
+  type       MessageType @default(USER_MESSAGE)
+  content    String      @db.Text
+  photo      String?
+  systemKey  String?     @map("system_key")
+  systemData Json?       @map("system_data")
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  reads      MessageRead[]
+
+  @@index([ticketId, createdAt])
+  @@index([orgId])
+  @@map("messages")
+}
+
+model MessageRead {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
+  user      User     @relation("MessageReader", fields: [userId], references: [id])
+  readAt    DateTime @default(now()) @map("read_at")
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("message_reads")
+}
+
+model Appointment {
+  id           String            @id @default(uuid())
+  orgId        String            @map("org_id")
+  ticketId     String            @map("ticket_id")
+  ticket       Ticket            @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdById  String            @map("created_by_id")
+  createdBy    User              @relation("AppointmentCreator", fields: [createdById], references: [id])
+  scheduledAt  DateTime          @map("scheduled_at")
+  durationMin  Int               @default(60) @map("duration_min")
+  note         String?
+  status       AppointmentStatus @default(SCHEDULED)
+  cancelReason String?           @map("cancel_reason")
+  completedAt  DateTime?         @map("completed_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([ticketId])
+  @@index([scheduledAt])
+  @@map("appointments")
+}
+
+model InAppNotification {
+  id        String   @id @default(uuid())
+  orgId     String   @map("org_id")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  link      String?
+  isRead    Boolean  @default(false) @map("is_read")
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@index([orgId])
+  @@map("in_app_notifications")
+}
