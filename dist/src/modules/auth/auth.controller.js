@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
+const throttler_1 = require("@nestjs/throttler");
 const auth_service_1 = require("./auth.service");
 const register_dto_1 = require("./dto/register.dto");
 const login_dto_1 = require("./dto/login.dto");
@@ -52,6 +53,7 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('register'),
     (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)({ auth: { limit: 5, ttl: 60000 } }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
@@ -60,6 +62,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('login'),
     (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)({ auth: { limit: 5, ttl: 60000 } }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
@@ -69,6 +72,7 @@ __decorate([
     (0, common_1.Post)('refresh'),
     (0, public_decorator_1.Public)(),
     (0, common_1.UseGuards)(jwt_refresh_guard_1.JwtRefreshGuard),
+    (0, throttler_1.Throttle)({ auth: { limit: 5, ttl: 60000 } }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

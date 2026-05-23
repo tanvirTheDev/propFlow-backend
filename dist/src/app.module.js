@@ -25,6 +25,7 @@ const chat_module_1 = require("./modules/chat/chat.module");
 const appointments_module_1 = require("./modules/appointments/appointments.module");
 const notifications_module_1 = require("./modules/notifications/notifications.module");
 const admin_module_1 = require("./modules/admin/admin.module");
+const health_module_1 = require("./modules/health/health.module");
 const env_validation_1 = require("./config/env.validation");
 let AppModule = class AppModule {
 };
@@ -38,7 +39,12 @@ exports.AppModule = AppModule = __decorate([
             }),
             throttler_1.ThrottlerModule.forRoot([
                 {
-                    name: 'default',
+                    name: 'global',
+                    ttl: 60000,
+                    limit: 100,
+                },
+                {
+                    name: 'auth',
                     ttl: 60000,
                     limit: 5,
                 },
@@ -57,6 +63,7 @@ exports.AppModule = AppModule = __decorate([
             appointments_module_1.AppointmentsModule,
             notifications_module_1.NotificationsModule,
             admin_module_1.AdminModule,
+            health_module_1.HealthModule,
         ],
         providers: [
             {

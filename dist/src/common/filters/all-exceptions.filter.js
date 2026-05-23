@@ -9,6 +9,7 @@ var AllExceptionsFilter_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AllExceptionsFilter = void 0;
 const common_1 = require("@nestjs/common");
+const Sentry = require("@sentry/node");
 let AllExceptionsFilter = AllExceptionsFilter_1 = class AllExceptionsFilter {
     constructor() {
         this.logger = new common_1.Logger(AllExceptionsFilter_1.name);
@@ -37,6 +38,7 @@ let AllExceptionsFilter = AllExceptionsFilter_1 = class AllExceptionsFilter {
         }
         else {
             this.logger.error('Unhandled exception', exception instanceof Error ? exception.stack : String(exception));
+            Sentry.captureException(exception);
         }
         response.status(statusCode).json({
             statusCode,
