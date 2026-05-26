@@ -62,6 +62,18 @@ export declare class MailService {
         reason?: string;
         ticketLink: string;
     }): Promise<void>;
+    sendVisitScheduled(opts: {
+        to: string;
+        language: string;
+        landlordName: string;
+        propertyName: string;
+        unitNumber: string;
+        scheduledAt: Date;
+        durationMin: number;
+        reason: string;
+        note?: string | null;
+        calendarLink: string;
+    }): Promise<void>;
     sendTicketPendingReminder(opts: {
         to: string;
         language: string;

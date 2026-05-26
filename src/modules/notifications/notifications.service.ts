@@ -35,10 +35,13 @@ interface QueuePayload {
   durationMin?: number;
   address?: string;
   note?: string;
+  reason?: string;
   cancelledBy?: string;
   cancelReason?: string;
   hoursUntil?: number;
   daysOpen?: number;
+  visitId?: string;
+  landlordName?: string;
 }
 
 @Injectable()
@@ -178,6 +181,23 @@ export class NotificationsService {
         });
         break;
 
+      case 'VISIT_SCHEDULED': {
+        const calendarLink = `${this.frontendUrl}/tenant/calendar`;
+        await this.mail.sendVisitScheduled({
+          to: user.email,
+          language: lang,
+          landlordName: payload.landlordName ?? '',
+          propertyName: payload.propertyName ?? '',
+          unitNumber: payload.unitNumber ?? '',
+          scheduledAt: new Date(payload.scheduledAt ?? Date.now()),
+          durationMin: payload.durationMin ?? 60,
+          reason: payload.reason ?? '',
+          note: payload.note,
+          calendarLink,
+        });
+        break;
+      }
+
       default:
         this.logger.warn(`No email handler for type: ${type}`);
     }
@@ -192,7 +212,7 @@ export class NotificationsService {
     if (!this.vapidConfigured || !user.pushSubscription) return;
 
     const meta = NOTIFICATION_TYPES[type];
-    if (!meta) return;
+    if (!meta || !meta.pushTitle) return; // null pushTitle = email-only type (e.g. VISIT_SCHEDULED)
 
     const isDE = lang === 'de';
     const pushData = {

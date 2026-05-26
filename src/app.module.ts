@@ -17,6 +17,7 @@ import { AppointmentsModule } from '@/modules/appointments/appointments.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { AdminModule } from '@/modules/admin/admin.module';
 import { HealthModule } from '@/modules/health/health.module';
+import { VisitsModule } from '@/modules/visits/visits.module';
 import { validate } from '@/config/env.validation';
 
 @Module({
@@ -52,6 +53,7 @@ import { validate } from '@/config/env.validation';
     NotificationsModule,
     AdminModule,
     HealthModule,
+    VisitsModule,
   ],
   providers: [
     {

@@ -17,7 +17,9 @@ let DashboardService = class DashboardService {
         this.prisma = prisma;
     }
     async getLandlordStats(orgId) {
-        const [totalProperties, totalUnits, occupiedUnits, pendingInvites, openTickets, inProgressTickets, emergencyTickets, recentProperties, recentTickets,] = await this.prisma.$transaction([
+        const now = new Date();
+        const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const [totalProperties, totalUnits, occupiedUnits, pendingInvites, openTickets, inProgressTickets, emergencyTickets, upcomingVisits, recentProperties, recentTickets,] = await this.prisma.$transaction([
             this.prisma.property.count({ where: { orgId } }),
             this.prisma.unit.count({ where: { orgId } }),
             this.prisma.unit.count({ where: { orgId, tenantId: { not: null } } }),
@@ -28,6 +30,13 @@ let DashboardService = class DashboardService {
             this.prisma.ticket.count({ where: { orgId, status: 'IN_PROGRESS' } }),
             this.prisma.ticket.count({
                 where: { orgId, isEmergency: true, status: { notIn: ['CLOSED'] } },
+            }),
+            this.prisma.landlordVisit.count({
+                where: {
+                    orgId,
+                    status: 'SCHEDULED',
+                    scheduledAt: { gte: now, lte: in7Days },
+                },
             }),
             this.prisma.property.findMany({
                 where: { orgId },
@@ -57,6 +66,7 @@ let DashboardService = class DashboardService {
             openTickets,
             inProgressTickets,
             emergencyTickets,
+            upcomingVisits,
             recentProperties,
             recentTickets,
         };

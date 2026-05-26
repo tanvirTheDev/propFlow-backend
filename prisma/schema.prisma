@@ -55,14 +55,29 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum VisitStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum VisitReason {
+  ROUTINE_INSPECTION
+  METER_READING
+  MAINTENANCE_CHECK
+  VIEWING
+  OTHER
+}
+
 model Organisation {
-  id         String     @id @default(uuid())
-  name       String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  users      User[]
-  properties Property[]
-  tickets    Ticket[]
+  id             String          @id @default(uuid())
+  name           String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  users          User[]
+  properties     Property[]
+  tickets        Ticket[]
+  landlordVisits LandlordVisit[]
 
   @@map("organisations")
 }
@@ -90,6 +105,8 @@ model User {
   messageReads          MessageRead[]          @relation("MessageReader")
   createdAppointments   Appointment[]          @relation("AppointmentCreator")
   inAppNotifications    InAppNotification[]
+  createdVisits         LandlordVisit[]        @relation("VisitCreator")
+  visitNotifications    LandlordVisitUnit[]    @relation("VisitNotifiedTenant")
 
   @@index([orgId])
   @@index([email])
@@ -105,13 +122,14 @@ model Property {
   city        String
   postalCode  String    @map("postal_code")
   country     String    @default("Germany")
-  notes       String?
-  latitude    Float?
-  longitude   Float?
-  geocodedAt  DateTime? @map("geocoded_at")
-  units       Unit[]
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  notes          String?
+  latitude       Float?
+  longitude      Float?
+  geocodedAt     DateTime?       @map("geocoded_at")
+  units          Unit[]
+  landlordVisits LandlordVisit[]
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
 
   @@index([orgId])
   @@map("properties")
@@ -130,6 +148,7 @@ model Unit {
   tenant       User?     @relation("UnitTenant", fields: [tenantId], references: [id])
   notes        String?
   tickets      Ticket[]
+  visitUnits   LandlordVisitUnit[]
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
@@ -311,4 +330,47 @@ model InAppNotification {
   @@index([userId, isRead])
   @@index([orgId])
   @@map("in_app_notifications")
+}
+
+model LandlordVisit {
+  id           String        @id @default(uuid())
+  orgId        String        @map("org_id")
+  org          Organisation  @relation(fields: [orgId], references: [id])
+  propertyId   String        @map("property_id")
+  property     Property      @relation(fields: [propertyId], references: [id])
+  createdById  String        @map("created_by_id")
+  createdBy    User          @relation("VisitCreator", fields: [createdById], references: [id])
+  scheduledAt  DateTime      @map("scheduled_at")
+  durationMin  Int           @default(60) @map("duration_min")
+  reason       VisitReason   @default(OTHER)
+  note         String?       @db.Text
+  status       VisitStatus   @default(SCHEDULED)
+  cancelReason String?       @map("cancel_reason")
+  completedAt  DateTime?     @map("completed_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  units        LandlordVisitUnit[]
+
+  @@index([orgId])
+  @@index([propertyId])
+  @@index([scheduledAt])
+  @@map("landlord_visits")
+}
+
+model LandlordVisitUnit {
+  id           String        @id @default(uuid())
+  visitId      String        @map("visit_id")
+  visit        LandlordVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  unitId       String        @map("unit_id")
+  unit         Unit          @relation(fields: [unitId], references: [id])
+  tenantId     String?       @map("tenant_id")
+  tenant       User?         @relation("VisitNotifiedTenant", fields: [tenantId], references: [id])
+  notifyTenant Boolean       @default(true) @map("notify_tenant")
+  emailSentAt  DateTime?     @map("email_sent_at")
+
+  @@unique([visitId, unitId])
+  @@index([visitId])
+  @@index([tenantId])
+  @@map("landlord_visit_units")
 }

@@ -26,6 +26,7 @@ const appointments_module_1 = require("./modules/appointments/appointments.modul
 const notifications_module_1 = require("./modules/notifications/notifications.module");
 const admin_module_1 = require("./modules/admin/admin.module");
 const health_module_1 = require("./modules/health/health.module");
+const visits_module_1 = require("./modules/visits/visits.module");
 const env_validation_1 = require("./config/env.validation");
 let AppModule = class AppModule {
 };
@@ -64,6 +65,7 @@ exports.AppModule = AppModule = __decorate([
             notifications_module_1.NotificationsModule,
             admin_module_1.AdminModule,
             health_module_1.HealthModule,
+            visits_module_1.VisitsModule,
         ],
         providers: [
             {

@@ -63,6 +63,13 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeMeta> = {
     inAppBody: { en: 'A ticket has been open for 3+ days', de: 'Ein Ticket ist seit 3+ Tagen offen' },
     linkPattern: '/landlord/tickets/{ticketId}',
   },
+  VISIT_SCHEDULED: {
+    emailTemplate: 'visit-scheduled',
+    pushTitle: null as unknown as { en: string; de: string }, // email only
+    inAppTitle: { en: 'Landlord visit scheduled', de: 'Vermieterbesuch geplant' },
+    inAppBody: { en: 'Your landlord has scheduled a visit', de: 'Ihr Vermieter hat einen Besuch geplant' },
+    linkPattern: '/tenant/calendar',
+  },
 };
 
 export function resolveLink(pattern: string, payload: Record<string, string>): string {

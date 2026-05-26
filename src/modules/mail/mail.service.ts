@@ -4,6 +4,20 @@ import * as nodemailer from 'nodemailer';
 
 const BRAND_COLOR = '#1d4ed8';
 
+const VISIT_REASON_LABELS: Record<string, { en: string; de: string }> = {
+  ROUTINE_INSPECTION: { en: 'Routine Inspection', de: 'Routineinspektion' },
+  METER_READING:      { en: 'Meter Reading',       de: 'Zählerablesung' },
+  MAINTENANCE_CHECK:  { en: 'Maintenance Check',   de: 'Wartungsprüfung' },
+  VIEWING:            { en: 'Property Viewing',    de: 'Wohnungsbesichtigung' },
+  OTHER:              { en: 'Other',               de: 'Sonstiges' },
+};
+
+function translateVisitReason(reason: string, lang: string): string {
+  const labels = VISIT_REASON_LABELS[reason];
+  if (!labels) return reason;
+  return lang === 'de' ? labels.de : labels.en;
+}
+
 function layout(body: string): string {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#111827">
@@ -224,6 +238,45 @@ export class MailService {
       <p style="margin-bottom:${opts.reason ? '8px' : '24px'}"><strong>${isDE ? 'Abgesagt von' : 'Cancelled by'}:</strong> ${opts.cancelledBy}</p>
       ${opts.reason ? `<p style="margin-bottom:24px;color:#374151;background:#fef9c3;padding:12px;border-radius:6px"><strong>${isDE ? 'Grund' : 'Reason'}:</strong> ${opts.reason}</p>` : ''}
       ${ctaButton(isDE ? 'Ticket ansehen' : 'View Ticket', opts.ticketLink)}
+    `);
+    await this.send(opts.to, subject, html);
+  }
+
+  async sendVisitScheduled(opts: {
+    to: string;
+    language: string;
+    landlordName: string;
+    propertyName: string;
+    unitNumber: string;
+    scheduledAt: Date;
+    durationMin: number;
+    reason: string;
+    note?: string | null;
+    calendarLink: string;
+  }) {
+    const isDE = opts.language === 'de';
+    const dateStr = opts.scheduledAt.toLocaleDateString(isDE ? 'de-DE' : 'en-GB', {
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    });
+    const timeStr = opts.scheduledAt.toLocaleTimeString(isDE ? 'de-DE' : 'en-GB', {
+      hour: '2-digit', minute: '2-digit',
+    });
+    const subject = isDE
+      ? `Vermieterbesuch geplant: ${dateStr}`
+      : `Landlord visit scheduled: ${dateStr}`;
+    const reasonLabel = translateVisitReason(opts.reason, opts.language);
+    const html = layout(`
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:16px">${isDE ? 'Vermieterbesuch geplant' : 'Landlord Visit Scheduled'}</h1>
+      <p style="margin-bottom:16px;color:#374151">${isDE ? 'Hallo,' : 'Hello,'}<br>${isDE ? 'Ihr Vermieter' : 'Your landlord'} <strong>${opts.landlordName}</strong> ${isDE ? 'hat einen Besuch in Ihrer Einheit geplant.' : 'has scheduled a visit to your unit.'}</p>
+      <p style="margin-bottom:8px"><strong>${isDE ? 'Liegenschaft' : 'Property'}:</strong> ${opts.propertyName}</p>
+      <p style="margin-bottom:8px"><strong>${isDE ? 'Einheit' : 'Unit'}:</strong> ${opts.unitNumber}</p>
+      <p style="margin-bottom:8px"><strong>${isDE ? 'Datum' : 'Date'}:</strong> ${dateStr}</p>
+      <p style="margin-bottom:8px"><strong>${isDE ? 'Uhrzeit' : 'Time'}:</strong> ${timeStr}</p>
+      <p style="margin-bottom:8px"><strong>${isDE ? 'Dauer' : 'Duration'}:</strong> ${opts.durationMin} ${isDE ? 'Minuten' : 'minutes'}</p>
+      <p style="margin-bottom:${opts.note ? '8px' : '24px'}"><strong>${isDE ? 'Grund' : 'Reason'}:</strong> ${reasonLabel}</p>
+      ${opts.note ? `<p style="margin-bottom:24px;color:#374151;background:#f9fafb;padding:12px;border-radius:6px">${opts.note}</p>` : ''}
+      <p style="margin-bottom:24px;font-size:13px;color:#6b7280">${isDE ? 'Bitte stellen Sie den Zugang zur Einheit sicher oder melden Sie sich bei Ihrem Vermieter, falls Sie Fragen haben.' : 'Please ensure access to your unit or contact your landlord if you have any questions.'}</p>
+      ${ctaButton(isDE ? 'Kalender ansehen' : 'View Calendar', opts.calendarLink)}
     `);
     await this.send(opts.to, subject, html);
   }

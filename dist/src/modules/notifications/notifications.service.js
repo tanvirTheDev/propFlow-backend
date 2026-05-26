@@ -134,6 +134,22 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                     ticketLink,
                 });
                 break;
+            case 'VISIT_SCHEDULED': {
+                const calendarLink = `${this.frontendUrl}/tenant/calendar`;
+                await this.mail.sendVisitScheduled({
+                    to: user.email,
+                    language: lang,
+                    landlordName: payload.landlordName ?? '',
+                    propertyName: payload.propertyName ?? '',
+                    unitNumber: payload.unitNumber ?? '',
+                    scheduledAt: new Date(payload.scheduledAt ?? Date.now()),
+                    durationMin: payload.durationMin ?? 60,
+                    reason: payload.reason ?? '',
+                    note: payload.note,
+                    calendarLink,
+                });
+                break;
+            }
             default:
                 this.logger.warn(`No email handler for type: ${type}`);
         }
@@ -142,7 +158,7 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
         if (!this.vapidConfigured || !user.pushSubscription)
             return;
         const meta = notification_types_1.NOTIFICATION_TYPES[type];
-        if (!meta)
+        if (!meta || !meta.pushTitle)
             return;
         const isDE = lang === 'de';
         const pushData = {

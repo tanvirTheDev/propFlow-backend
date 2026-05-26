@@ -13,6 +13,7 @@ export declare class DashboardController {
         openTickets: number;
         inProgressTickets: number;
         emergencyTickets: number;
+        upcomingVisits: number;
         recentProperties: ({
             _count: {
                 units: number;

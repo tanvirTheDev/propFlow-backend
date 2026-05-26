@@ -12,6 +12,7 @@ export declare class DashboardService {
         openTickets: number;
         inProgressTickets: number;
         emergencyTickets: number;
+        upcomingVisits: number;
         recentProperties: ({
             _count: {
                 units: number;
