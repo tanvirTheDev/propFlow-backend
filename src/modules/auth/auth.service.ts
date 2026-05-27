@@ -153,13 +153,19 @@ export class AuthService {
     return { user: this.sanitizeUser(user), ...tokens };
   }
 
+  // SHA-256 hash for short-lived OTPs — instant, unlike bcrypt which is
+  // CPU-bound and too slow for low-resource environments (Render free 0.1 CPU).
+  private hashOtp(code: string): string {
+    return crypto.createHash('sha256').update(code).digest('hex');
+  }
+
   async forgotPassword(dto: ForgotPasswordDto) {
     // Always return success to prevent user enumeration
     const user = await this.usersService.findByEmail(dto.email);
     if (!user) return { message: 'If an account exists, a code has been sent.' };
 
     const code = String(crypto.randomInt(100000, 999999));
-    const hashedCode = await bcrypt.hash(code, 10);
+    const hashedCode = this.hashOtp(code); // instant — no bcrypt on hot path
     const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     await this.prisma.user.update({
@@ -191,7 +197,7 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired code');
     }
 
-    const codeValid = await bcrypt.compare(dto.code, user.passwordResetCode);
+    const codeValid = this.hashOtp(dto.code) === user.passwordResetCode;
     if (!codeValid) throw new BadRequestException('Invalid or expired code');
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);

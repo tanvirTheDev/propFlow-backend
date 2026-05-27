@@ -71,6 +71,7 @@ export declare class AuthService {
             phone: string | null;
         };
     }>;
+    private hashOtp;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
         message: string;
     }>;

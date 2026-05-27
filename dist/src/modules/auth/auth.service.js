@@ -129,12 +129,15 @@ let AuthService = AuthService_1 = class AuthService {
         await this.storeRefreshToken(user.id, tokens.refreshToken);
         return { user: this.sanitizeUser(user), ...tokens };
     }
+    hashOtp(code) {
+        return crypto.createHash('sha256').update(code).digest('hex');
+    }
     async forgotPassword(dto) {
         const user = await this.usersService.findByEmail(dto.email);
         if (!user)
             return { message: 'If an account exists, a code has been sent.' };
         const code = String(crypto.randomInt(100000, 999999));
-        const hashedCode = await bcrypt.hash(code, 10);
+        const hashedCode = this.hashOtp(code);
         const expiry = new Date(Date.now() + 15 * 60 * 1000);
         await this.prisma.user.update({
             where: { id: user.id },
@@ -161,7 +164,7 @@ let AuthService = AuthService_1 = class AuthService {
         if (user.passwordResetExpiry < new Date()) {
             throw new common_1.BadRequestException('Invalid or expired code');
         }
-        const codeValid = await bcrypt.compare(dto.code, user.passwordResetCode);
+        const codeValid = this.hashOtp(dto.code) === user.passwordResetCode;
         if (!codeValid)
             throw new common_1.BadRequestException('Invalid or expired code');
         const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
