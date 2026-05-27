@@ -10,6 +10,9 @@ export default defineConfig({
     seed: 'npx tsx prisma/seed.ts',
   },
   datasource: {
-    url: process.env['DATABASE_URL'],
+    // Use the direct (non-pooler) URL for migrations.
+    // Neon's pooler (PgBouncer) doesn't support advisory locks which Prisma requires.
+    // The runtime PrismaService uses DATABASE_URL (pooler) via PrismaPg adapter.
+    url: process.env['DIRECT_URL'] ?? process.env['DATABASE_URL'],
   },
 });
