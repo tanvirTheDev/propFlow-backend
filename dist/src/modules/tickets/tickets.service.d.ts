@@ -58,9 +58,9 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         orgId: string;
+        priority: import("@prisma/client").$Enums.TicketPriority;
         unitId: string;
         tenantId: string;
-        priority: import("@prisma/client").$Enums.TicketPriority;
         status: import("@prisma/client").$Enums.TicketStatus;
         isEmergency: boolean;
         ticketNumber: string;
@@ -122,9 +122,9 @@ export declare class TicketsService {
             createdAt: Date;
             updatedAt: Date;
             orgId: string;
+            priority: import("@prisma/client").$Enums.TicketPriority;
             unitId: string;
             tenantId: string;
-            priority: import("@prisma/client").$Enums.TicketPriority;
             status: import("@prisma/client").$Enums.TicketStatus;
             isEmergency: boolean;
             ticketNumber: string;
@@ -197,9 +197,9 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         orgId: string;
+        priority: import("@prisma/client").$Enums.TicketPriority;
         unitId: string;
         tenantId: string;
-        priority: import("@prisma/client").$Enums.TicketPriority;
         status: import("@prisma/client").$Enums.TicketStatus;
         isEmergency: boolean;
         ticketNumber: string;
@@ -260,9 +260,9 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         orgId: string;
+        priority: import("@prisma/client").$Enums.TicketPriority;
         unitId: string;
         tenantId: string;
-        priority: import("@prisma/client").$Enums.TicketPriority;
         status: import("@prisma/client").$Enums.TicketStatus;
         isEmergency: boolean;
         ticketNumber: string;
@@ -347,9 +347,9 @@ export declare class TicketsService {
         createdAt: Date;
         updatedAt: Date;
         orgId: string;
+        priority: import("@prisma/client").$Enums.TicketPriority;
         unitId: string;
         tenantId: string;
-        priority: import("@prisma/client").$Enums.TicketPriority;
         status: import("@prisma/client").$Enums.TicketStatus;
         isEmergency: boolean;
         ticketNumber: string;

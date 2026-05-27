@@ -74,6 +74,12 @@ export declare class MailService {
         note?: string | null;
         calendarLink: string;
     }): Promise<void>;
+    sendPasswordReset(opts: {
+        to: string;
+        name: string;
+        code: string;
+        language?: string;
+    }): Promise<void>;
     sendTicketPendingReminder(opts: {
         to: string;
         language: string;

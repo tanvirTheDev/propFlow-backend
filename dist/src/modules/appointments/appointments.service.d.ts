@@ -28,8 +28,8 @@ export declare class AppointmentsService {
                     };
                     unitNumber: string;
                 };
-                tenantId: string;
                 priority: import("@prisma/client").$Enums.TicketPriority;
+                tenantId: string;
                 ticketNumber: string;
                 title: string;
             };
@@ -66,8 +66,8 @@ export declare class AppointmentsService {
                 };
                 unitNumber: string;
             };
-            tenantId: string;
             priority: import("@prisma/client").$Enums.TicketPriority;
+            tenantId: string;
             ticketNumber: string;
             title: string;
         };
@@ -102,8 +102,8 @@ export declare class AppointmentsService {
                 };
                 unitNumber: string;
             };
-            tenantId: string;
             priority: import("@prisma/client").$Enums.TicketPriority;
+            tenantId: string;
             ticketNumber: string;
             title: string;
         };
@@ -138,8 +138,8 @@ export declare class AppointmentsService {
                 };
                 unitNumber: string;
             };
-            tenantId: string;
             priority: import("@prisma/client").$Enums.TicketPriority;
+            tenantId: string;
             ticketNumber: string;
             title: string;
         };
@@ -174,8 +174,8 @@ export declare class AppointmentsService {
                 };
                 unitNumber: string;
             };
-            tenantId: string;
             priority: import("@prisma/client").$Enums.TicketPriority;
+            tenantId: string;
             ticketNumber: string;
             title: string;
         };
@@ -210,8 +210,8 @@ export declare class AppointmentsService {
                 };
                 unitNumber: string;
             };
-            tenantId: string;
             priority: import("@prisma/client").$Enums.TicketPriority;
+            tenantId: string;
             ticketNumber: string;
             title: string;
         };
@@ -246,8 +246,8 @@ export declare class AppointmentsService {
                 };
                 unitNumber: string;
             };
-            tenantId: string;
             priority: import("@prisma/client").$Enums.TicketPriority;
+            tenantId: string;
             ticketNumber: string;
             title: string;
         };

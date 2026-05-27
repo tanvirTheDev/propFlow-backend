@@ -281,6 +281,28 @@ export class MailService {
     await this.send(opts.to, subject, html);
   }
 
+  async sendPasswordReset(opts: {
+    to: string;
+    name: string;
+    code: string;
+    language?: string;
+  }) {
+    const isDE = opts.language === 'de';
+    const subject = isDE
+      ? 'Passwort zurücksetzen — PropFlow'
+      : 'Reset your password — PropFlow';
+    const html = layout(`
+      <h1 style="font-size:22px;font-weight:700;margin-bottom:8px">${isDE ? 'Passwort zurücksetzen' : 'Reset your password'}</h1>
+      <p style="color:#6b7280;margin-bottom:24px">${isDE ? 'Hallo' : 'Hi'} ${opts.name},</p>
+      <p style="margin-bottom:8px">${isDE ? 'Verwende diesen Code, um dein Passwort zurückzusetzen. Er ist 15 Minuten gültig.' : 'Use this code to reset your password. It expires in 15 minutes.'}</p>
+      <div style="margin:24px 0;text-align:center">
+        <span style="display:inline-block;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:16px 32px;font-size:32px;font-weight:700;letter-spacing:8px;color:#1d4ed8;font-family:monospace">${opts.code}</span>
+      </div>
+      <p style="font-size:13px;color:#9ca3af">${isDE ? 'Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.' : "If you didn't request this, you can safely ignore this email."}</p>
+    `);
+    await this.send(opts.to, subject, html);
+  }
+
   async sendTicketPendingReminder(opts: {
     to: string;
     language: string;

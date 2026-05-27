@@ -11,12 +11,16 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import type { StringValue } from 'ms';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UsersService } from '@/modules/users/users.service';
+import { MailService } from '@/modules/mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtPayload } from './types/jwt-payload.type';
 
 const BCRYPT_ROUNDS = 12;
@@ -30,6 +34,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -146,6 +151,64 @@ export class AuthService {
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     return { user: this.sanitizeUser(user), ...tokens };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    // Always return success to prevent user enumeration
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user) return { message: 'If an account exists, a code has been sent.' };
+
+    const code = String(crypto.randomInt(100000, 999999));
+    const hashedCode = await bcrypt.hash(code, 10);
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordResetCode: hashedCode, passwordResetExpiry: expiry },
+    });
+
+    try {
+      await this.mailService.sendPasswordReset({
+        to: user.email,
+        name: user.name,
+        code,
+        language: user.language,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to send password reset email to ${user.email}: ${(err as Error).message}`);
+    }
+
+    return { message: 'If an account exists, a code has been sent.' };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.usersService.findByEmail(dto.email);
+    if (!user || !user.passwordResetCode || !user.passwordResetExpiry) {
+      throw new BadRequestException('Invalid or expired code');
+    }
+
+    if (user.passwordResetExpiry < new Date()) {
+      throw new BadRequestException('Invalid or expired code');
+    }
+
+    const codeValid = await bcrypt.compare(dto.code, user.passwordResetCode);
+    if (!codeValid) throw new BadRequestException('Invalid or expired code');
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetCode: null,
+        passwordResetExpiry: null,
+        // Invalidate all existing sessions
+        refreshToken: null,
+      },
+    });
+
+    this.logger.log(`User ${user.id} reset their password`);
+    return { message: 'Password reset successfully' };
   }
 
   async getInviteInfo(token: string) {

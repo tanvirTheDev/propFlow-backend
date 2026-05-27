@@ -16,15 +16,18 @@ const config_1 = require("@nestjs/config");
 const jwt_1 = require("@nestjs/jwt");
 const client_1 = require("@prisma/client");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const users_service_1 = require("../users/users.service");
+const mail_service_1 = require("../mail/mail.service");
 const BCRYPT_ROUNDS = 12;
 let AuthService = AuthService_1 = class AuthService {
-    constructor(prisma, usersService, jwtService, configService) {
+    constructor(prisma, usersService, jwtService, configService, mailService) {
         this.prisma = prisma;
         this.usersService = usersService;
         this.jwtService = jwtService;
         this.configService = configService;
+        this.mailService = mailService;
         this.logger = new common_1.Logger(AuthService_1.name);
     }
     async register(dto) {
@@ -126,6 +129,54 @@ let AuthService = AuthService_1 = class AuthService {
         await this.storeRefreshToken(user.id, tokens.refreshToken);
         return { user: this.sanitizeUser(user), ...tokens };
     }
+    async forgotPassword(dto) {
+        const user = await this.usersService.findByEmail(dto.email);
+        if (!user)
+            return { message: 'If an account exists, a code has been sent.' };
+        const code = String(crypto.randomInt(100000, 999999));
+        const hashedCode = await bcrypt.hash(code, 10);
+        const expiry = new Date(Date.now() + 15 * 60 * 1000);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { passwordResetCode: hashedCode, passwordResetExpiry: expiry },
+        });
+        try {
+            await this.mailService.sendPasswordReset({
+                to: user.email,
+                name: user.name,
+                code,
+                language: user.language,
+            });
+        }
+        catch (err) {
+            this.logger.error(`Failed to send password reset email to ${user.email}: ${err.message}`);
+        }
+        return { message: 'If an account exists, a code has been sent.' };
+    }
+    async resetPassword(dto) {
+        const user = await this.usersService.findByEmail(dto.email);
+        if (!user || !user.passwordResetCode || !user.passwordResetExpiry) {
+            throw new common_1.BadRequestException('Invalid or expired code');
+        }
+        if (user.passwordResetExpiry < new Date()) {
+            throw new common_1.BadRequestException('Invalid or expired code');
+        }
+        const codeValid = await bcrypt.compare(dto.code, user.passwordResetCode);
+        if (!codeValid)
+            throw new common_1.BadRequestException('Invalid or expired code');
+        const hashedPassword = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                passwordResetCode: null,
+                passwordResetExpiry: null,
+                refreshToken: null,
+            },
+        });
+        this.logger.log(`User ${user.id} reset their password`);
+        return { message: 'Password reset successfully' };
+    }
     async getInviteInfo(token) {
         const invite = await this.prisma.tenantInvite.findUnique({
             where: { token },
@@ -178,6 +229,7 @@ exports.AuthService = AuthService = AuthService_1 = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         users_service_1.UsersService,
         jwt_1.JwtService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        mail_service_1.MailService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

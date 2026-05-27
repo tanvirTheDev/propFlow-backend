@@ -19,6 +19,8 @@ const auth_service_1 = require("./auth.service");
 const register_dto_1 = require("./dto/register.dto");
 const login_dto_1 = require("./dto/login.dto");
 const accept_invite_dto_1 = require("./dto/accept-invite.dto");
+const forgot_password_dto_1 = require("./dto/forgot-password.dto");
+const reset_password_dto_1 = require("./dto/reset-password.dto");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const jwt_refresh_guard_1 = require("./guards/jwt-refresh.guard");
 const public_decorator_1 = require("./decorators/public.decorator");
@@ -47,6 +49,12 @@ let AuthController = class AuthController {
     }
     getInviteInfo(token) {
         return this.authService.getInviteInfo(token);
+    }
+    forgotPassword(dto) {
+        return this.authService.forgotPassword(dto);
+    }
+    resetPassword(dto) {
+        return this.authService.resetPassword(dto);
     }
 };
 exports.AuthController = AuthController;
@@ -108,6 +116,24 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "getInviteInfo", null);
+__decorate([
+    (0, common_1.Post)('forgot-password'),
+    (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)({ auth: { limit: 3, ttl: 60000 } }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [forgot_password_dto_1.ForgotPasswordDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "forgotPassword", null);
+__decorate([
+    (0, common_1.Post)('reset-password'),
+    (0, public_decorator_1.Public)(),
+    (0, throttler_1.Throttle)({ auth: { limit: 5, ttl: 60000 } }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [reset_password_dto_1.ResetPasswordDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "resetPassword", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
