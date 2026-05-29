@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthController = void 0;
 const common_1 = require("@nestjs/common");
-const throttler_1 = require("@nestjs/throttler");
 const terminus_1 = require("@nestjs/terminus");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let HealthController = class HealthController {
@@ -40,7 +39,6 @@ __decorate([
 ], HealthController.prototype, "check", null);
 exports.HealthController = HealthController = __decorate([
     (0, common_1.Controller)('health'),
-    (0, throttler_1.SkipThrottle)(),
     __metadata("design:paramtypes", [terminus_1.HealthCheckService,
         terminus_1.PrismaHealthIndicator,
         terminus_1.MemoryHealthIndicator,

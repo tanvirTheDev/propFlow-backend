@@ -8,9 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
-const core_1 = require("@nestjs/core");
 const config_1 = require("@nestjs/config");
-const throttler_1 = require("@nestjs/throttler");
 const schedule_1 = require("@nestjs/schedule");
 const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./modules/auth/auth.module");
@@ -38,18 +36,6 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
                 validate: env_validation_1.validate,
             }),
-            throttler_1.ThrottlerModule.forRoot([
-                {
-                    name: 'global',
-                    ttl: 60000,
-                    limit: 100,
-                },
-                {
-                    name: 'auth',
-                    ttl: 60000,
-                    limit: 5,
-                },
-            ]),
             schedule_1.ScheduleModule.forRoot(),
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
@@ -67,12 +53,7 @@ exports.AppModule = AppModule = __decorate([
             health_module_1.HealthModule,
             visits_module_1.VisitsModule,
         ],
-        providers: [
-            {
-                provide: core_1.APP_GUARD,
-                useClass: throttler_1.ThrottlerGuard,
-            },
-        ],
+        providers: [],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
