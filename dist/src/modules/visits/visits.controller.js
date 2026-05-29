@@ -61,8 +61,8 @@ let VisitsController = class VisitsController {
     update(user, id, dto) {
         return this.visitsService.update(id, user.orgId, user.sub, dto);
     }
-    complete(user, id, note) {
-        return this.visitsService.complete(id, user.orgId, note);
+    complete(user, id, note, endTime) {
+        return this.visitsService.complete(id, user.orgId, note, endTime);
     }
     cancel(user, id, reason) {
         return this.visitsService.cancel(id, user.orgId, reason);
@@ -112,8 +112,9 @@ __decorate([
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)('note')),
+    __param(3, (0, common_1.Body)('endTime')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String]),
     __metadata("design:returntype", void 0)
 ], VisitsController.prototype, "complete", null);
 __decorate([

@@ -65,8 +65,9 @@ export class VisitsController {
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body('note') note?: string,
+    @Body('endTime') endTime?: string,
   ) {
-    return this.visitsService.complete(id, user.orgId, note);
+    return this.visitsService.complete(id, user.orgId, note, endTime);
   }
 
   @Post(':id/cancel')

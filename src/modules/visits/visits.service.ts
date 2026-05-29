@@ -215,11 +215,21 @@ export class VisitsService {
     return { visit: updated, warning };
   }
 
-  async complete(id: string, orgId: string, note?: string) {
+  async complete(id: string, orgId: string, note?: string, endTime?: string) {
     const visit = await this.prisma.landlordVisit.findFirst({ where: { id, orgId } });
     if (!visit) throw new NotFoundException('Visit not found');
     if (visit.status !== VisitStatus.SCHEDULED) {
       throw new BadRequestException('Visit is not in SCHEDULED status');
+    }
+
+    // Calculate actual duration from the landlord's reported end time
+    let durationMin: number | undefined;
+    if (endTime) {
+      const end = new Date(endTime);
+      const diffMs = end.getTime() - visit.scheduledAt.getTime();
+      if (diffMs > 0) {
+        durationMin = Math.round(diffMs / 60000);
+      }
     }
 
     return this.prisma.landlordVisit.update({
@@ -228,6 +238,7 @@ export class VisitsService {
         status: VisitStatus.COMPLETED,
         completedAt: new Date(),
         ...(note && { note }),
+        ...(durationMin !== undefined && { durationMin }),
       },
       include: VISIT_INCLUDE,
     });

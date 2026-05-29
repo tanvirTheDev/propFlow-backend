@@ -202,7 +202,7 @@ export declare class VisitsController {
         };
         warning: string | undefined;
     }>;
-    complete(user: JwtPayload, id: string, note?: string): Promise<{
+    complete(user: JwtPayload, id: string, note?: string, endTime?: string): Promise<{
         property: {
             id: string;
             name: string;

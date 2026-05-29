@@ -192,12 +192,20 @@ let VisitsService = VisitsService_1 = class VisitsService {
         }
         return { visit: updated, warning };
     }
-    async complete(id, orgId, note) {
+    async complete(id, orgId, note, endTime) {
         const visit = await this.prisma.landlordVisit.findFirst({ where: { id, orgId } });
         if (!visit)
             throw new common_1.NotFoundException('Visit not found');
         if (visit.status !== client_1.VisitStatus.SCHEDULED) {
             throw new common_1.BadRequestException('Visit is not in SCHEDULED status');
+        }
+        let durationMin;
+        if (endTime) {
+            const end = new Date(endTime);
+            const diffMs = end.getTime() - visit.scheduledAt.getTime();
+            if (diffMs > 0) {
+                durationMin = Math.round(diffMs / 60000);
+            }
         }
         return this.prisma.landlordVisit.update({
             where: { id },
@@ -205,6 +213,7 @@ let VisitsService = VisitsService_1 = class VisitsService {
                 status: client_1.VisitStatus.COMPLETED,
                 completedAt: new Date(),
                 ...(note && { note }),
+                ...(durationMin !== undefined && { durationMin }),
             },
             include: VISIT_INCLUDE,
         });

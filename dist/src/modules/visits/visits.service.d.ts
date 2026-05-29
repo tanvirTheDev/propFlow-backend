@@ -201,7 +201,7 @@ export declare class VisitsService {
         };
         warning: string | undefined;
     }>;
-    complete(id: string, orgId: string, note?: string): Promise<{
+    complete(id: string, orgId: string, note?: string, endTime?: string): Promise<{
         property: {
             id: string;
             name: string;
