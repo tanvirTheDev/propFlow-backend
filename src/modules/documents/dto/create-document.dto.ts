@@ -6,7 +6,6 @@ import {
   IsString,
   MaxLength,
   MinLength,
-  ValidateIf,
 } from 'class-validator';
 
 const DOCUMENT_CATEGORIES = [
@@ -61,9 +60,4 @@ export class CreateDocumentDto {
   @IsString()
   @IsOptional()
   leaseId?: string;
-
-  // At least one scope must be set — validated in service
-  @ValidateIf((o: CreateDocumentDto) => !o.propertyId && !o.unitId && !o.tenantId)
-  @IsString({ message: 'At least one of propertyId, unitId, or tenantId must be provided' })
-  _scopeCheck?: string;
 }
