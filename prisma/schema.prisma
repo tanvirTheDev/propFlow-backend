@@ -122,7 +122,7 @@ model User {
   inAppNotifications    InAppNotification[]
   createdVisits         LandlordVisit[]        @relation("VisitCreator")
   visitNotifications    LandlordVisitUnit[]    @relation("VisitNotifiedTenant")
-  lease                 Lease?                 @relation("TenantLease")
+  leases                Lease[]                @relation("TenantLease")
 
   @@index([orgId])
   @@index([email])
@@ -398,7 +398,7 @@ model Lease {
   org                  Organisation @relation(fields: [orgId], references: [id])
   unitId               String       @unique @map("unit_id")
   unit                 Unit         @relation(fields: [unitId], references: [id])
-  tenantId             String       @unique @map("tenant_id")
+  tenantId             String       @map("tenant_id")
   tenant               User         @relation("TenantLease", fields: [tenantId], references: [id])
 
   leaseType            LeaseType    @default(UNLIMITED) @map("lease_type")

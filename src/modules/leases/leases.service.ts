@@ -53,10 +53,15 @@ export class LeasesService {
     });
     if (!tenant) throw new NotFoundException('Tenant not found in this organisation');
 
-    const existing = await this.prisma.lease.findFirst({
+    const existingUnit = await this.prisma.lease.findFirst({
       where: { unitId: dto.unitId, status: { in: ['ACTIVE', 'EXPIRING_SOON'] } },
     });
-    if (existing) throw new ConflictException('This unit already has an active lease');
+    if (existingUnit) throw new ConflictException('This unit already has an active lease');
+
+    const existingTenant = await this.prisma.lease.findFirst({
+      where: { tenantId: dto.tenantId, status: { in: ['ACTIVE', 'EXPIRING_SOON'] } },
+    });
+    if (existingTenant) throw new ConflictException('This tenant already has an active lease');
 
     if (dto.leaseType === 'FIXED_TERM' && !dto.endDate) {
       throw new BadRequestException('End date is required for fixed-term leases');
@@ -100,6 +105,7 @@ export class LeasesService {
     const where: Record<string, unknown> = { orgId };
     if (query.unitId) where['unitId'] = query.unitId;
     if (query.tenantId) where['tenantId'] = query.tenantId;
+    if (query.status) where['status'] = query.status;
 
     const leases = await this.prisma.lease.findMany({
       where,
@@ -107,20 +113,16 @@ export class LeasesService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const enriched = leases.map(enrichLease);
-
-    if (query.status) {
-      return enriched.filter((l: ReturnType<typeof enrichLease>) => l.status === query.status);
-    }
-    return enriched;
+    return leases.map(enrichLease);
   }
 
   async findMyLease(tenantId: string) {
-    const lease = await this.prisma.lease.findUnique({
-      where: { tenantId },
+    const lease = await this.prisma.lease.findFirst({
+      where: { tenantId, status: { in: ['ACTIVE', 'EXPIRING_SOON'] } },
       include: LEASE_INCLUDE,
+      orderBy: { createdAt: 'desc' },
     });
-    if (!lease) throw new NotFoundException('No lease found');
+    if (!lease) throw new NotFoundException('No active lease found');
     return enrichLease(lease);
   }
 
@@ -233,14 +235,4 @@ export class LeasesService {
     return enrichLease(updated);
   }
 
-  async getExpiringSoonCount(orgId: string) {
-    const leases = await this.prisma.lease.findMany({
-      where: { orgId, leaseType: 'FIXED_TERM', status: { in: ['ACTIVE', 'EXPIRING_SOON'] } },
-    });
-    return leases.filter((l: Lease) => {
-      if (!l.endDate) return false;
-      const days = differenceInDays(new Date(l.endDate), new Date());
-      return days >= 0 && days <= 90;
-    }).length;
-  }
 }
