@@ -328,4 +328,47 @@ export class MailService {
     `);
     await this.send(opts.to, subject, html);
   }
+
+  async sendLeaseExpiryAlert(opts: {
+    to: string;
+    language: string;
+    landlordName: string;
+    tenantName: string;
+    unitNumber: string;
+    propertyName: string;
+    endDate: Date;
+    daysLeft: number;
+    noticePeriodMonths: number;
+    leaseLink: string;
+  }) {
+    const isDE = opts.language === 'de';
+    const urgencyColor = opts.daysLeft <= 30 ? '#dc2626' : opts.daysLeft <= 60 ? '#d97706' : '#2563eb';
+    const formattedEnd = opts.endDate.toLocaleDateString('de-DE', {
+      day: '2-digit', month: 'long', year: 'numeric',
+    });
+    const subject = isDE
+      ? `Mietvertrag läuft ab — noch ${opts.daysLeft} Tage`
+      : `Lease expiring — ${opts.daysLeft} days left`;
+
+    const html = layout(`
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:16px">${isDE ? 'Mietvertrag läuft bald ab' : 'Lease Expiring Soon'}</h1>
+      <p style="margin-bottom:16px;color:#374151">${isDE ? 'Sehr geehrte/r' : 'Dear'} ${opts.landlordName},</p>
+      <p style="margin-bottom:16px;color:#374151">
+        ${isDE
+          ? `Der Mietvertrag für <strong>${opts.tenantName}</strong> in <strong>${opts.unitNumber}</strong> (${opts.propertyName}) läuft am <strong>${formattedEnd}</strong> ab.`
+          : `The lease for <strong>${opts.tenantName}</strong> in unit <strong>${opts.unitNumber}</strong> at ${opts.propertyName} expires on <strong>${formattedEnd}</strong>.`}
+      </p>
+      <div style="background:#f9fafb;border-radius:8px;padding:16px;margin-bottom:24px;text-align:center">
+        <div style="font-size:36px;font-weight:800;color:${urgencyColor}">${opts.daysLeft}</div>
+        <div style="font-size:14px;color:#6b7280">${isDE ? 'Tage verbleibend' : 'days remaining'}</div>
+      </div>
+      <p style="margin-bottom:24px;color:#374151;font-size:13px">
+        ${isDE
+          ? `Kündigungsfrist laut Vertrag: ${opts.noticePeriodMonths} Monate`
+          : `Notice period per contract: ${opts.noticePeriodMonths} months`}
+      </p>
+      ${ctaButton(isDE ? 'Mietvertrag ansehen' : 'View Lease', opts.leaseLink)}
+    `);
+    await this.send(opts.to, subject, html);
+  }
 }

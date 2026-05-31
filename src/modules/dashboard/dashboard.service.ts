@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { addDays, differenceInDays } from 'date-fns';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
@@ -20,6 +21,8 @@ export class DashboardService {
       upcomingVisits,
       recentProperties,
       recentTickets,
+      activeLeases,
+      pendingDeposits,
     ] = await this.prisma.$transaction([
       this.prisma.property.count({ where: { orgId } }),
       this.prisma.unit.count({ where: { orgId } }),
@@ -54,7 +57,20 @@ export class DashboardService {
           unit: { select: { id: true, unitNumber: true } },
         },
       }),
+      this.prisma.lease.count({ where: { orgId, status: { in: ['ACTIVE', 'EXPIRING_SOON'] } } }),
+      this.prisma.lease.count({ where: { orgId, status: { in: ['ACTIVE', 'EXPIRING_SOON'] }, depositReceivedDate: null } }),
     ]);
+
+    // Compute expiring-soon count dynamically (fixed-term leases within 90 days)
+    const fixedTermLeases = await this.prisma.lease.findMany({
+      where: { orgId, leaseType: 'FIXED_TERM', status: { in: ['ACTIVE', 'EXPIRING_SOON'] }, endDate: { not: null, lte: addDays(now, 90) } },
+      select: { endDate: true },
+    });
+    const expiringSoonLeases = fixedTermLeases.filter((l: { endDate: Date | null }) => {
+      if (!l.endDate) return false;
+      const days = differenceInDays(new Date(l.endDate), now);
+      return days >= 0 && days <= 90;
+    }).length;
 
     const vacantUnits = totalUnits - occupiedUnits;
     const occupancyRate = totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
@@ -72,6 +88,9 @@ export class DashboardService {
       upcomingVisits,
       recentProperties,
       recentTickets,
+      activeLeases,
+      expiringSoonLeases,
+      pendingDeposits,
     };
   }
 

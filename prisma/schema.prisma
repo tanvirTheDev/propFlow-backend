@@ -69,6 +69,18 @@ enum VisitReason {
   OTHER
 }
 
+enum LeaseType {
+  UNLIMITED
+  FIXED_TERM
+}
+
+enum LeaseStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  TERMINATED
+}
+
 model Organisation {
   id             String          @id @default(uuid())
   name           String
@@ -78,6 +90,7 @@ model Organisation {
   properties     Property[]
   tickets        Ticket[]
   landlordVisits LandlordVisit[]
+  leases         Lease[]
 
   @@map("organisations")
 }
@@ -109,6 +122,7 @@ model User {
   inAppNotifications    InAppNotification[]
   createdVisits         LandlordVisit[]        @relation("VisitCreator")
   visitNotifications    LandlordVisitUnit[]    @relation("VisitNotifiedTenant")
+  lease                 Lease?                 @relation("TenantLease")
 
   @@index([orgId])
   @@index([email])
@@ -151,6 +165,7 @@ model Unit {
   notes        String?
   tickets      Ticket[]
   visitUnits   LandlordVisitUnit[]
+  lease        Lease?
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
@@ -375,4 +390,47 @@ model LandlordVisitUnit {
   @@index([visitId])
   @@index([tenantId])
   @@map("landlord_visit_units")
+}
+
+model Lease {
+  id                   String       @id @default(uuid())
+  orgId                String       @map("org_id")
+  org                  Organisation @relation(fields: [orgId], references: [id])
+  unitId               String       @unique @map("unit_id")
+  unit                 Unit         @relation(fields: [unitId], references: [id])
+  tenantId             String       @unique @map("tenant_id")
+  tenant               User         @relation("TenantLease", fields: [tenantId], references: [id])
+
+  leaseType            LeaseType    @default(UNLIMITED) @map("lease_type")
+  startDate            DateTime     @map("start_date")
+  endDate              DateTime?    @map("end_date")
+  noticePeriodMonths   Int          @default(3) @map("notice_period_months")
+
+  coldRent             Decimal      @db.Decimal(10, 2) @map("cold_rent")
+  utilitiesAdvance     Decimal      @db.Decimal(10, 2) @map("utilities_advance")
+  totalRent            Decimal      @db.Decimal(10, 2) @map("total_rent")
+
+  depositAmount        Decimal      @db.Decimal(10, 2) @map("deposit_amount")
+  depositReceivedDate  DateTime?    @map("deposit_received_date")
+  depositReturnedDate  DateTime?    @map("deposit_returned_date")
+  depositNotes         String?      @map("deposit_notes")
+
+  status               LeaseStatus  @default(ACTIVE)
+  terminatedDate       DateTime?    @map("terminated_date")
+  terminationReason    String?      @map("termination_reason") @db.Text
+
+  alert90SentAt        DateTime?    @map("alert_90_sent_at")
+  alert60SentAt        DateTime?    @map("alert_60_sent_at")
+  alert30SentAt        DateTime?    @map("alert_30_sent_at")
+
+  notes                String?      @db.Text
+
+  createdAt            DateTime     @default(now()) @map("created_at")
+  updatedAt            DateTime     @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([endDate])
+  @@map("leases")
 }

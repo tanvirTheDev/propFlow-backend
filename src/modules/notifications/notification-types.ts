@@ -70,6 +70,27 @@ export const NOTIFICATION_TYPES: Record<string, NotificationTypeMeta> = {
     inAppBody: { en: 'Your landlord has scheduled a visit', de: 'Ihr Vermieter hat einen Besuch geplant' },
     linkPattern: '/tenant/calendar',
   },
+  LEASE_EXPIRING_90D: {
+    emailTemplate: 'lease-expiring',
+    pushTitle: null as unknown as { en: string; de: string },
+    inAppTitle: { en: 'Lease expiring in 90 days', de: 'Mietvertrag läuft in 90 Tagen ab' },
+    inAppBody: { en: 'A lease is expiring soon — 90 days left', de: 'Ein Mietvertrag läuft in 90 Tagen ab' },
+    linkPattern: '/landlord/leases',
+  },
+  LEASE_EXPIRING_60D: {
+    emailTemplate: 'lease-expiring',
+    pushTitle: null as unknown as { en: string; de: string },
+    inAppTitle: { en: 'Lease expiring in 60 days', de: 'Mietvertrag läuft in 60 Tagen ab' },
+    inAppBody: { en: 'A lease is expiring soon — 60 days left', de: 'Ein Mietvertrag läuft in 60 Tagen ab' },
+    linkPattern: '/landlord/leases',
+  },
+  LEASE_EXPIRING_30D: {
+    emailTemplate: 'lease-expiring',
+    pushTitle: null as unknown as { en: string; de: string },
+    inAppTitle: { en: 'Lease expiring in 30 days — action required', de: 'Mietvertrag läuft in 30 Tagen ab — Handlung erforderlich' },
+    inAppBody: { en: 'A lease expires in 30 days — renew or terminate', de: 'Ein Mietvertrag läuft in 30 Tagen ab' },
+    linkPattern: '/landlord/leases',
+  },
 };
 
 export function resolveLink(pattern: string, payload: Record<string, string>): string {
