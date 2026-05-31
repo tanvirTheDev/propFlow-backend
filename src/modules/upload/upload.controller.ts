@@ -12,6 +12,8 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '@/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/modules/auth/decorators/current-user.decorator';
 import type { JwtPayload } from '@/modules/auth/types/jwt-payload.type';
 import { UploadService } from './upload.service';
@@ -53,5 +55,22 @@ export class UploadController {
   ) {
     const url = await this.uploadService.uploadChatPhoto(user.orgId, file);
     return { url };
+  }
+
+  @Post('document')
+  @UseGuards(RolesGuard)
+  @Roles('LANDLORD')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  async uploadDocument(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: 20 * 1024 * 1024 })],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.uploadService.uploadDocument(user.orgId, file);
   }
 }

@@ -81,6 +81,25 @@ enum LeaseStatus {
   TERMINATED
 }
 
+enum DocumentCategory {
+  LEASE_CONTRACT
+  FLOOR_PLAN
+  ENERGY_CERTIFICATE
+  HOUSE_RULES
+  HANDOVER_REPORT
+  UTILITY_BILL
+  INSPECTION_REPORT
+  INSURANCE
+  INVOICE
+  CORRESPONDENCE
+  OTHER
+}
+
+enum DocumentVisibility {
+  LANDLORD_ONLY
+  SHARED_WITH_TENANT
+}
+
 model Organisation {
   id             String          @id @default(uuid())
   name           String
@@ -91,6 +110,7 @@ model Organisation {
   tickets        Ticket[]
   landlordVisits LandlordVisit[]
   leases         Lease[]
+  documents      Document[]
 
   @@map("organisations")
 }
@@ -123,6 +143,9 @@ model User {
   createdVisits         LandlordVisit[]        @relation("VisitCreator")
   visitNotifications    LandlordVisitUnit[]    @relation("VisitNotifiedTenant")
   leases                Lease[]                @relation("TenantLease")
+  uploadedDocuments     Document[]             @relation("DocumentUploader")
+  tenantDocuments       Document[]             @relation("DocumentTenant")
+  documentAccessLogs    DocumentAccessLog[]    @relation("DocumentAccessor")
 
   @@index([orgId])
   @@index([email])
@@ -144,6 +167,7 @@ model Property {
   geocodedAt     DateTime?       @map("geocoded_at")
   units          Unit[]
   landlordVisits LandlordVisit[]
+  documents      Document[]
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
@@ -166,6 +190,7 @@ model Unit {
   tickets      Ticket[]
   visitUnits   LandlordVisitUnit[]
   lease        Lease?
+  documents    Document[]
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
@@ -425,6 +450,8 @@ model Lease {
 
   notes                String?      @db.Text
 
+  documents            Document[]
+
   createdAt            DateTime     @default(now()) @map("created_at")
   updatedAt            DateTime     @updatedAt @map("updated_at")
 
@@ -433,4 +460,55 @@ model Lease {
   @@index([status])
   @@index([endDate])
   @@map("leases")
+}
+
+model Document {
+  id           String             @id @default(uuid())
+  orgId        String             @map("org_id")
+  org          Organisation       @relation(fields: [orgId], references: [id])
+  uploadedById String             @map("uploaded_by_id")
+  uploadedBy   User               @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  name         String
+  description  String?            @db.Text
+  fileUrl      String             @map("file_url")
+  fileType     String             @map("file_type")
+  fileSizeBytes Int               @map("file_size_bytes")
+  category     DocumentCategory
+  visibility   DocumentVisibility @default(LANDLORD_ONLY)
+
+  propertyId   String?            @map("property_id")
+  property     Property?          @relation(fields: [propertyId], references: [id])
+  unitId       String?            @map("unit_id")
+  unit         Unit?              @relation(fields: [unitId], references: [id])
+  tenantId     String?            @map("tenant_id")
+  tenant       User?              @relation("DocumentTenant", fields: [tenantId], references: [id])
+
+  leaseId      String?            @map("lease_id")
+  lease        Lease?             @relation(fields: [leaseId], references: [id])
+
+  accessLogs   DocumentAccessLog[]
+
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  @@index([orgId])
+  @@index([propertyId])
+  @@index([unitId])
+  @@index([tenantId])
+  @@index([visibility])
+  @@map("documents")
+}
+
+model DocumentAccessLog {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  user       User     @relation("DocumentAccessor", fields: [userId], references: [id])
+  accessedAt DateTime @default(now()) @map("accessed_at")
+
+  @@index([documentId])
+  @@index([userId])
+  @@map("document_access_logs")
 }

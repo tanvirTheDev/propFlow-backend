@@ -19,6 +19,7 @@ import { AdminModule } from '@/modules/admin/admin.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { VisitsModule } from '@/modules/visits/visits.module';
 import { LeasesModule } from '@/modules/leases/leases.module';
+import { DocumentsModule } from '@/modules/documents/documents.module';
 import { validate } from '@/config/env.validation';
 
 @Module({
@@ -48,6 +49,7 @@ import { validate } from '@/config/env.validation';
     HealthModule,
     VisitsModule,
     LeasesModule,
+    DocumentsModule,
   ],
   providers: [
     // { provide: APP_GUARD, useClass: ThrottlerGuard },
